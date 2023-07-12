@@ -73,6 +73,250 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-Exercise 4 - LibTIFF" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/12/Exercise%204%20-%20LibTIFF/" class="article-date">
+  <time class="dt-published" datetime="2023-07-12T15:13:41.695Z" itemprop="datePublished">2023-07-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="Exercise-4-LibTIFF"><a href="#Exercise-4-LibTIFF" class="headerlink" title="Exercise 4 - LibTIFF"></a>Exercise 4 - LibTIFF</h1><p>我们准备使用fuzz测试LibTIFF来寻找漏洞</p>
+<p>首先我们准备环境，下载LIBTIFF并解压</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME</span><br><span class="line">mkdir fuzzing_tiff &amp;&amp; cd fuzzing_tiff/</span><br><span class="line">wget https://download.osgeo.org/libtiff/tiff-4.0.4.tar.gz</span><br><span class="line">tar -xzvf tiff-4.0.4.tar.gz</span><br></pre></td></tr></table></figure>
+
+<p>然后我们编译和安装LIBTIFF</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd tiff-4.0.4/</span><br><span class="line">./configure --prefix=&quot;$HOME/fuzzing_tiff/install/&quot; --disable-shared</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>然后我们使用&#x2F;test&#x2F;images&#x2F;文件夹中的示例图像作为模糊测试例子。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME/fuzzing_tiff/install/bin/tiffinfo -D -j -c -r -s -w $HOME/fuzzing_tiff/tiff-4.0.4/test/images/palette-1c-1b.tiff</span><br></pre></td></tr></table></figure>
+
+<p>![屏幕截图 2023-07-11 220446](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-11 220446.png)</p>
+<p>接下来我们使用icov测试软件的代码覆盖率，显示每行代码被触发的次数，可视化模糊过程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install lcov</span><br></pre></td></tr></table></figure>
+
+<p>现在我们用——coverage标志重新编译libTIFF</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_tiff/install</span><br><span class="line">cd $HOME/fuzzing_tiff/tiff-4.0.4/</span><br><span class="line">make clean</span><br><span class="line">  </span><br><span class="line">CFLAGS=&quot;--coverage&quot; LDFLAGS=&quot;--coverage&quot; ./configure --prefix=&quot;$HOME/fuzzing_tiff/install/&quot; --disable-shared</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>接下来我们用lcov收集代码覆盖率数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME/fuzzing_tiff/tiff-4.0.4/</span><br><span class="line">lcov --zerocounters --directory ./</span><br><span class="line">lcov --capture --initial --directory ./ --output-file app.info</span><br><span class="line">$HOME/fuzzing_tiff/install/bin/tiffinfo -D -j -c -r -s -w $HOME/fuzzing_tiff/tiff-4.0.4/test/images/palette-1c-1b.tiff</span><br><span class="line">lcov --no-checksum --directory ./ --capture --output-file app2.info</span><br></pre></td></tr></table></figure>
+
+<p>我们运行lcov后，设置生成的html后，进行查看</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">genhtml --highlight --legend -output-directory ./html-coverage/ ./app2.info</span><br></pre></td></tr></table></figure>
+
+<p>![屏幕截图 2023-07-11 232748](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-11 232748.png)</p>
+<p>首先我们进行重新编译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_tiff/install</span><br><span class="line">cd $HOME/fuzzing_tiff/tiff-4.0.4/</span><br><span class="line">make clean</span><br></pre></td></tr></table></figure>
+
+<p>再设置AFL_USE_ASAN&#x3D;1</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=afl-clang-lto ./configure --prefix=&quot;$HOME/fuzzing_tiff/install/&quot; --disable-shared</span><br><span class="line">AFL_USE_ASAN=1 make -j4</span><br><span class="line">AFL_USE_ASAN=1 make install</span><br></pre></td></tr></table></figure>
+
+<p>然后我们运行fuzz测试</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">afl-fuzz -m none -i $HOME/fuzzing_tiff/tiff-4.0.4/test/images/ -o $HOME/fuzzing_tiff/out/ -s 123 -- $HOME/fuzzing_tiff/install/bin/tiffinfo -D -j -c -r -s -w @@</span><br></pre></td></tr></table></figure>
+
+<p>![屏幕截图 2023-07-12 003641](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-12 003641.png)</p>
+<p>我们利用tiffinfo进行查看，发现发生了溢出</p>
+<p>![屏幕截图 2023-07-12 010249](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-12 010249.png)</p>
+<p>我们利用lcov检查一下代码覆盖率![屏幕截图 2023-07-12 215621](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-12 215621.png)</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/07/12/Exercise%204%20-%20LibTIFF/" data-id="cljzv4ind0003fov6d368d9ol" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-Exercise 3 - TCPdump" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/12/Exercise%203%20-%20TCPdump/" class="article-date">
+  <time class="dt-published" datetime="2023-07-12T15:13:41.676Z" itemprop="datePublished">2023-07-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="Exercise-3-TCPdump"><a href="#Exercise-3-TCPdump" class="headerlink" title="Exercise 3 - TCPdump"></a>Exercise 3 - TCPdump</h1><p>这个实验是来测试TCPdump软件的，所以我们要先准备环境</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME</span><br><span class="line">mkdir fuzzing_tcpdump &amp;&amp; cd fuzzing_tcpdump/</span><br><span class="line">wget https://github.com/the-tcpdump-group/tcpdump/archive/refs/tags/tcpdump-4.9.2.tar.gz</span><br><span class="line">tar -xzvf tcpdump-4.9.2.tar.gz</span><br><span class="line">wget https://github.com/the-tcpdump-group/libpcap/archive/refs/tags/libpcap-1.8.0.tar.gz</span><br><span class="line">tar -xzvf libpcap-1.8.0.tar.gz</span><br><span class="line">mv libpcap-libpcap-1.8.0/ libpcap-1.8.0</span><br><span class="line">cd $HOME/fuzzing_tcpdump/libpcap-1.8.0/</span><br><span class="line">./configure --enable-shared=no</span><br><span class="line">make</span><br><span class="line">cd $HOME/fuzzing_tcpdump/tcpdump-tcpdump-4.9.2/</span><br><span class="line">./configure --prefix=&quot;$HOME/fuzzing_tcpdump/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br><span class="line">$HOME/fuzzing_tcpdump/install/sbin/tcpdump -h</span><br></pre></td></tr></table></figure>
+
+<p>安装后我们打开tcpdump查看</p>
+<p>![屏幕截图 2023-07-10 104150](Images\屏幕截图 2023-07-10 104150.png)</p>
+<p>然后我们为fuzz测试准备测试样例</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME/fuzzing_tcpdump/install/sbin/tcpdump -vvvvXX -ee -nn -r ./tests/geneve.pcap</span><br></pre></td></tr></table></figure>
+
+<p>![屏幕截图 2023-07-10 104245](Images\屏幕截图 2023-07-10 104245.png)</p>
+<p>Tcpdump是用来抓包的一款软件，打开捕获的pcap数据包，可以看见多个包的内容。</p>
+<p>AddressSanitizer是一种用于C和c++的快速内存错误检测器。能够查找对堆、堆栈和全局对象的越界访问，以及use-after-free、double-free和内存泄漏错误。可以用来监测fuzz测出来的cash文件。</p>
+<p>我们清除之前编译过的文件，为后来的插桩做准备</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_tcpdump/install</span><br><span class="line">cd $HOME/fuzzing_tcpdump/libpcap-1.8.0/</span><br><span class="line">make clean</span><br><span class="line"></span><br><span class="line">cd $HOME/fuzzing_tcpdump/tcpdump-tcpdump-4.9.2/</span><br><span class="line">make clean</span><br></pre></td></tr></table></figure>
+
+<p>进行插桩</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME/fuzzing_tcpdump/libpcap-1.8.0/</span><br><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=afl-clang-lto ./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_tcpdump/install/&quot;</span><br><span class="line">AFL_USE_ASAN=1 make</span><br><span class="line"></span><br><span class="line">cd $HOME/fuzzing_tcpdump/tcpdump-tcpdump-4.9.2/</span><br><span class="line">AFL_USE_ASAN=1 CC=afl-clang-lto ./configure --prefix=&quot;$HOME/fuzzing_tcpdump/install/&quot;</span><br><span class="line">AFL_USE_ASAN=1 make</span><br><span class="line">AFL_USE_ASAN=1 make install</span><br></pre></td></tr></table></figure>
+
+<p>我们对插桩编译后的程序进行测试</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">afl-fuzz -m none -i $HOME/fuzzing_tcpdump/tcpdump-tcpdump-4.9.2/tests/ -o $HOME/fuzzing_tcpdump/out/ -s 123 -- $HOME/fuzzing_tcpdump/install/sbin/tcpdump -vvvvXX -ee -nn -r @@</span><br></pre></td></tr></table></figure>
+
+<p>![屏幕截图 2023-07-10 163132](Images\屏幕截图 2023-07-10 163132.png)</p>
+<p>我们使用ASan测试cash文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME/fuzzing_tcpdump/install/sbin/tcpdump -vvvvXX -ee -nn -r $HOME/fuzzing_tcpdump/out/default/crashes/id:000001,sig:06,src:009131,time:11955870,execs:4926739,op:havoc,rep:11</span><br></pre></td></tr></table></figure>
+
+<p>我们可以看见对cash文件的崩溃总结，包括执行跟踪</p>
+<p>![屏幕截图 2023-07-10 202422](Images\屏幕截图 2023-07-10 202422.png)</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/07/12/Exercise%203%20-%20TCPdump/" data-id="cljzv4ind0002fov6gh2o50zv" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-Exercise 2 - libexif" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/12/Exercise%202%20-%20libexif/" class="article-date">
+  <time class="dt-published" datetime="2023-07-12T15:13:41.648Z" itemprop="datePublished">2023-07-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="Exercise-2-libexif"><a href="#Exercise-2-libexif" class="headerlink" title="Exercise 2 - libexif"></a>Exercise 2 - libexif</h1><p>首先准备测试环境，我们测试的对象是libexif库，libexif 是一个用来读取数码相机照片中包含的 exif 信息的 C 语言库。所以我们先下载libexif库并解压和安装</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/libexif/libexif/archive/refs/tags/libexif-0_6_14-release.tar.gz</span><br><span class="line">tar -xzvf libexif-0_6_14-release.tar.gz</span><br><span class="line">cd libexif-libexif-0_6_14-release/</span><br><span class="line">sudo apt-get install autopoint libtool gettext libpopt-dev</span><br><span class="line">autoreconf -fvi</span><br><span class="line">./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_libexif/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>我们要测试一个库，需要使用一个调用该库的程序，然后对该程序进行Fuzz测试，在这里我们选用<strong>exif command-line</strong>作为目标程序<strong>exif command-line</strong>可以用来显示图像方向 exif 数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME/fuzzing_libexif</span><br><span class="line">wget https://github.com/libexif/exif/archive/refs/tags/exif-0_6_15-release.tar.gz</span><br><span class="line">tar -xzvf exif-0_6_15-release.tar.gz</span><br><span class="line">cd exif-exif-0_6_15-release/</span><br><span class="line">autoreconf -fvi</span><br><span class="line">./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_libexif/install/&quot; PKG_CONFIG_PATH=$HOME/fuzzing_libexif/install/lib/pkgconfig</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>测试exif command-line</p>
+<p><img src="/Images%5Cimage-20230708221404799.png" alt="image-20230708221404799"></p>
+<p>接下来准备测试用例</p>
+<p><img src="C:\Users\wn\AppData\Roaming\Typora\typora-user-images\image-20230708221930977.png" alt="image-20230708221930977"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/ianare/exif-samples/archive/refs/heads/master.zip</span><br><span class="line">unzip master.zip</span><br><span class="line">$HOME/fuzzing_libexif/install/bin/exif $HOME/fuzzing_libexif/exif-samples-master/jpg/Pentax_K10D.jpg</span><br></pre></td></tr></table></figure>
+
+<p><img src="/Images%5Cimage-20230708222204517.png" alt="image-20230708222204517"></p>
+<p>准备好测试用例后我们要利用<strong>afl-clang-lto</strong>作为编译器去对exif软件和libexif库进行重编译来插桩，监测覆盖率</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_libexif/install</span><br><span class="line">cd $HOME/fuzzing_libexif/libexif-libexif-0_6_14-release/</span><br><span class="line">make clean</span><br><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=afl-clang-lto ./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_libexif/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br><span class="line">//重编译libexif库</span><br><span class="line">cd $HOME/fuzzing_libexif/exif-exif-0_6_15-release</span><br><span class="line">make clean</span><br><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=afl-clang-lto ./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_libexif/install/&quot; PKG_CONFIG_PATH=$HOME/fuzzing_libexif/install/lib/pkgconfig</span><br><span class="line">make</span><br><span class="line">make install</span><br><span class="line">//重编译exif软件</span><br></pre></td></tr></table></figure>
+
+<p>afl-clang-lto是一种无碰撞的工具，而且比afl-clang-fast更快。当适用C&#x2F;C++ 11+时使用LTO模式(afl-clang-lto&#x2F;afl-clang-lto++)，否则如果适用C&#x2F;C++ 6+时使用LLVM模式(afl-clang-fast&#x2F;afl-clang-fast++),如果以上都不适用只适用于gcc 5+以上使用GCC_PLUGIN模式(afl-gcc-fast&#x2F;afl-g++-fast)，最后的选择是使用GCC mode (afl-gcc&#x2F;afl-g++) (or afl-clang&#x2F;afl-clang++ for clang)</p>
+<p>接下来我们对exif进行测试</p>
+<p>![屏幕截图 2023-07-08 202819](Images\屏幕截图 2023-07-08 202819.png)</p>
+<p>然后我们利用Eclipse-CDT来进行调试![屏幕截图 2023-07-08 234443](Images\屏幕截图 2023-07-08 233150.png)</p>
+<p><img src="/Images%5Cimage-20230708234521394.png" alt="image-20230708234521394"></p>
+<p>设置好之后我们对exif进行debug，点击Run -&gt; Resume后程序会在段错误的地方停下，我们可以看见data_load_data函数报错点击发现这个就是<a target="_blank" rel="noopener" href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2836"><strong>CVE-2012-2836</strong></a>漏洞，这个漏洞会产生整数溢出问题。而<a target="_blank" rel="noopener" href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3895"><strong>CVE-2009-3895</strong></a> 可能存在堆上的越界读写行为</p>
+<p><img src="/Images%5Cimage-20230708224352151.png" alt="image-20230708224352151"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/07/12/Exercise%202%20-%20libexif/" data-id="cljzv4inb0001fov65f3n0dm3" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-Fuzz/Exercise1/Exercise 1 - Xpdf" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/" class="article-date">
+  <time class="dt-published" datetime="2023-07-12T15:13:41.618Z" itemprop="datePublished">2023-07-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="Exercise-1-Xpdf"><a href="#Exercise-1-Xpdf" class="headerlink" title="Exercise 1 - Xpdf"></a>Exercise 1 - Xpdf</h1><h2 id="搭建测试目标Xpdf"><a href="#搭建测试目标Xpdf" class="headerlink" title="搭建测试目标Xpdf"></a>搭建测试目标Xpdf</h2><p>首先为fuzz测试xpdf创建文件夹</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME</span><br><span class="line">mkdir fuzzing_xpdf &amp;&amp; cd fuzzing_xpdf/</span><br></pre></td></tr></table></figure>
+
+<p>准备编译c&#x2F;c++所需要的软件包</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install build-essential</span><br></pre></td></tr></table></figure>
+
+<p>下载并编译Xpdf3.02</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">wget https://dl.xpdfreader.com/old/xpdf-3.02.tar.gz</span><br><span class="line">tar -xvzf xpdf-3.02.tar.gz</span><br><span class="line">cd xpdf-3.02</span><br><span class="line">sudo apt update &amp;&amp; sudo apt install -y build-essential gcc</span><br><span class="line">./configure --prefix=&quot;$HOME/fuzzing_xpdf/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>如果git失败，无法连接则输入下列命令取消代理</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global --unset https.proxy</span><br><span class="line">git config --global --unset http.proxy</span><br></pre></td></tr></table></figure>
+
+<p>接着为fuzz测试准备测试例子</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME/fuzzing_xpdf</span><br><span class="line">mkdir pdf_examples &amp;&amp; cd pdf_examples</span><br><span class="line">wget https://github.com/mozilla/pdf.js-sample-files/raw/master/helloworld.pdf</span><br><span class="line">wget http://www.africau.edu/images/default/sample.pdf</span><br><span class="line">wget https://www.melbpc.org.au/wp-content/uploads/2017/10/small-example-pdf-file.pdf</span><br></pre></td></tr></table></figure>
+
+<p>然后我们测试一下安装的pdfinfo</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME/fuzzing_xpdf/install/bin/pdfinfo -box -meta $HOME/fuzzing_xpdf/pdf_examples/helloworld.pdf</span><br></pre></td></tr></table></figure>
+
+<p><img src="/Images%5Cimage-20230707113856487.png" alt="image-20230707113856487"></p>
+<p>接下来安装AFL++测试软件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get install -y build-essential python3-dev automake git flex bison libglib2.0-dev libpixman-1-dev python3-setuptools</span><br><span class="line">sudo apt-get install -y lld-11 llvm-11 llvm-11-dev clang-11 || sudo apt-get install -y lld llvm llvm-dev clang </span><br><span class="line">sudo apt-get install -y gcc-$(gcc --version|head -n1|sed &#x27;s/.* //&#x27;|sed &#x27;s/\..*//&#x27;)-plugin-dev libstdc++-$(gcc --version|head -n1|sed &#x27;s/.* //&#x27;|sed &#x27;s/\..*//&#x27;)-dev</span><br></pre></td></tr></table></figure>
+
+<p>输入afl-fuzz测试是否安装成功</p>
+<p>![屏幕截图 2023-07-06 230346](Images\屏幕截图 2023-07-06 230346.png)</p>
+<p>我们要使用AFL++更好的测试Xpdf就要进行插桩，利用afl-gcc重新编译，实现对分支覆盖率的捕获，以及分支节点计数。首先要清除之前编译过的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_xpdf/install</span><br><span class="line">cd $HOME/fuzzing_xpdf/xpdf-3.02/</span><br><span class="line">make clean</span><br></pre></td></tr></table></figure>
+
+<p>现在使用afl-clang-fast编译器构建xpdf:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=$HOME/AFLplusplus/afl-clang-fast CXX=$HOME/AFLplusplus/afl-clang-fast++ ./configure --prefix=&quot;$HOME/fuzzing_xpdf/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>然后我们运行fuzz进行测试</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">afl-fuzz -i $HOME/fuzzing_xpdf/pdf_examples/ -o $HOME/fuzzing_xpdf/out/ -s 123 -- $HOME/fuzzing_xpdf/install/bin/pdftotext @@ $HOME/fuzzing_xpdf/output</span><br></pre></td></tr></table></figure>
+
+<p>如果出现”Hmm, your system is configured to send core dump notifications to an external utility…”则输入</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo su</span><br><span class="line">echo core &gt;/proc/sys/kernel/core_pattern</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
+
+<p>如果出现下列情况，则证明插桩出现问题，可以使用-n或者重新插桩</p>
+<p><img src="/Images%5Cimage-20230707133600261.png" alt="image-20230707133600261"></p>
+<p>成功之后我们运行AFL，我们发现一个cash后退出，进入HOME&#x2F;fuzzing_xpdf&#x2F;out&#x2F;查看输出的cash样例信息</p>
+<p>![屏幕截图 2023-07-07 110152](Images\屏幕截图 2023-07-07 110152.png)</p>
+<p>![屏幕截图 2023-07-07 110201](Images\屏幕截图 2023-07-07 110201.png)</p>
+<p>找到cash样例后我们打开gdb进行调试，首先下入多个断点，将样例作为输入，运行后会出现segmentation fault错误</p>
+<p>![屏幕截图 2023-07-07 111228](Images\屏幕截图 2023-07-07 111228.png)</p>
+<p>接着我们输入bt查看报错堆栈</p>
+<p><img src="/Images%5Cimage-20230707135029084.png" alt="image-20230707135029084"></p>
+<p>我们可以发现多次调用了Parser::getObj，陷入了无限递归调用中，由于递归调用无法结束所以堆栈无法清理，最终导致栈溢出。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/" data-id="cljzv4ine0004fov614e38f5i" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-Exercise 1 - Xpdf" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2023/07/10/Exercise%201%20-%20Xpdf/" class="article-date">
@@ -135,7 +379,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2023/07/10/Exercise%201%20-%20Xpdf/" data-id="cljwyy10x0000asv6bb60ep6o" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="http://example.com/2023/07/10/Exercise%201%20-%20Xpdf/" data-id="cljzv4in30000fov6h2d7cdzz" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -176,6 +420,22 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%204%20-%20LibTIFF/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%203%20-%20TCPdump/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%202%20-%20libexif/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/">(no title)</a>
+          </li>
         
           <li>
             <a href="/2023/07/10/Exercise%201%20-%20Xpdf/">(no title)</a>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Exercise 2 - libexif首先准备测试环境，我们测试的对象是libexif库，libexif 是一个用来读取数码相机照片中包含的 exif 信息的 C 语言库。所以我们先下载libexif库并解压和安装 12345678wget https:&#x2F;&#x2F;github.com&#x2F;libexif&#x2F;libexif&#x2F;archive&#x2F;refs&#x2F;tags&#x2F;libexif-0_6_14-release.ta">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://example.com/2023/07/12/Exercise%202%20-%20libexif/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="Exercise 2 - libexif首先准备测试环境，我们测试的对象是libexif库，libexif 是一个用来读取数码相机照片中包含的 exif 信息的 C 语言库。所以我们先下载libexif库并解压和安装 12345678wget https:&#x2F;&#x2F;github.com&#x2F;libexif&#x2F;libexif&#x2F;archive&#x2F;refs&#x2F;tags&#x2F;libexif-0_6_14-release.ta">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/Images%5Cimage-20230708221404799.png">
+<meta property="og:image" content="c:\Users\wn\AppData\Roaming\Typora\typora-user-images\image-20230708221930977.png">
+<meta property="og:image" content="http://example.com/Images%5Cimage-20230708222204517.png">
+<meta property="og:image" content="http://example.com/Images%5Cimage-20230708234521394.png">
+<meta property="og:image" content="http://example.com/Images%5Cimage-20230708224352151.png">
+<meta property="article:published_time" content="2023-07-12T15:13:41.648Z">
+<meta property="article:modified_time" content="2023-07-10T14:23:40.689Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/Images%5Cimage-20230708221404799.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-Exercise 2 - libexif" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/12/Exercise%202%20-%20libexif/" class="article-date">
+  <time class="dt-published" datetime="2023-07-12T15:13:41.648Z" itemprop="datePublished">2023-07-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="Exercise-2-libexif"><a href="#Exercise-2-libexif" class="headerlink" title="Exercise 2 - libexif"></a>Exercise 2 - libexif</h1><p>首先准备测试环境，我们测试的对象是libexif库，libexif 是一个用来读取数码相机照片中包含的 exif 信息的 C 语言库。所以我们先下载libexif库并解压和安装</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/libexif/libexif/archive/refs/tags/libexif-0_6_14-release.tar.gz</span><br><span class="line">tar -xzvf libexif-0_6_14-release.tar.gz</span><br><span class="line">cd libexif-libexif-0_6_14-release/</span><br><span class="line">sudo apt-get install autopoint libtool gettext libpopt-dev</span><br><span class="line">autoreconf -fvi</span><br><span class="line">./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_libexif/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>我们要测试一个库，需要使用一个调用该库的程序，然后对该程序进行Fuzz测试，在这里我们选用<strong>exif command-line</strong>作为目标程序<strong>exif command-line</strong>可以用来显示图像方向 exif 数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME/fuzzing_libexif</span><br><span class="line">wget https://github.com/libexif/exif/archive/refs/tags/exif-0_6_15-release.tar.gz</span><br><span class="line">tar -xzvf exif-0_6_15-release.tar.gz</span><br><span class="line">cd exif-exif-0_6_15-release/</span><br><span class="line">autoreconf -fvi</span><br><span class="line">./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_libexif/install/&quot; PKG_CONFIG_PATH=$HOME/fuzzing_libexif/install/lib/pkgconfig</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>测试exif command-line</p>
+<p><img src="/Images%5Cimage-20230708221404799.png" alt="image-20230708221404799"></p>
+<p>接下来准备测试用例</p>
+<p><img src="C:\Users\wn\AppData\Roaming\Typora\typora-user-images\image-20230708221930977.png" alt="image-20230708221930977"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/ianare/exif-samples/archive/refs/heads/master.zip</span><br><span class="line">unzip master.zip</span><br><span class="line">$HOME/fuzzing_libexif/install/bin/exif $HOME/fuzzing_libexif/exif-samples-master/jpg/Pentax_K10D.jpg</span><br></pre></td></tr></table></figure>
+
+<p><img src="/Images%5Cimage-20230708222204517.png" alt="image-20230708222204517"></p>
+<p>准备好测试用例后我们要利用<strong>afl-clang-lto</strong>作为编译器去对exif软件和libexif库进行重编译来插桩，监测覆盖率</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_libexif/install</span><br><span class="line">cd $HOME/fuzzing_libexif/libexif-libexif-0_6_14-release/</span><br><span class="line">make clean</span><br><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=afl-clang-lto ./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_libexif/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br><span class="line">//重编译libexif库</span><br><span class="line">cd $HOME/fuzzing_libexif/exif-exif-0_6_15-release</span><br><span class="line">make clean</span><br><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=afl-clang-lto ./configure --enable-shared=no --prefix=&quot;$HOME/fuzzing_libexif/install/&quot; PKG_CONFIG_PATH=$HOME/fuzzing_libexif/install/lib/pkgconfig</span><br><span class="line">make</span><br><span class="line">make install</span><br><span class="line">//重编译exif软件</span><br></pre></td></tr></table></figure>
+
+<p>afl-clang-lto是一种无碰撞的工具，而且比afl-clang-fast更快。当适用C&#x2F;C++ 11+时使用LTO模式(afl-clang-lto&#x2F;afl-clang-lto++)，否则如果适用C&#x2F;C++ 6+时使用LLVM模式(afl-clang-fast&#x2F;afl-clang-fast++),如果以上都不适用只适用于gcc 5+以上使用GCC_PLUGIN模式(afl-gcc-fast&#x2F;afl-g++-fast)，最后的选择是使用GCC mode (afl-gcc&#x2F;afl-g++) (or afl-clang&#x2F;afl-clang++ for clang)</p>
+<p>接下来我们对exif进行测试</p>
+<p>![屏幕截图 2023-07-08 202819](Images\屏幕截图 2023-07-08 202819.png)</p>
+<p>然后我们利用Eclipse-CDT来进行调试![屏幕截图 2023-07-08 234443](Images\屏幕截图 2023-07-08 233150.png)</p>
+<p><img src="/Images%5Cimage-20230708234521394.png" alt="image-20230708234521394"></p>
+<p>设置好之后我们对exif进行debug，点击Run -&gt; Resume后程序会在段错误的地方停下，我们可以看见data_load_data函数报错点击发现这个就是<a target="_blank" rel="noopener" href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2836"><strong>CVE-2012-2836</strong></a>漏洞，这个漏洞会产生整数溢出问题。而<a target="_blank" rel="noopener" href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3895"><strong>CVE-2009-3895</strong></a> 可能存在堆上的越界读写行为</p>
+<p><img src="/Images%5Cimage-20230708224352151.png" alt="image-20230708224352151"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/07/12/Exercise%202%20-%20libexif/" data-id="cljzv4inb0001fov65f3n0dm3" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/07/12/Exercise%203%20-%20TCPdump/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title"></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">July 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%204%20-%20LibTIFF/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%203%20-%20TCPdump/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%202%20-%20libexif/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/10/Exercise%201%20-%20Xpdf/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

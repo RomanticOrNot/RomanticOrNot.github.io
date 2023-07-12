@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Exercise 4 - LibTIFF我们准备使用fuzz测试LibTIFF来寻找漏洞 首先我们准备环境，下载LIBTIFF并解压 1234cd $HOMEmkdir fuzzing_tiff &amp;&amp; cd fuzzing_tiff&#x2F;wget https:&#x2F;&#x2F;download.osgeo.org&#x2F;libtiff&#x2F;tiff-4.0.4.tar.gztar -xzvf tiff-4.0">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://example.com/2023/07/12/Exercise%204%20-%20LibTIFF/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="Exercise 4 - LibTIFF我们准备使用fuzz测试LibTIFF来寻找漏洞 首先我们准备环境，下载LIBTIFF并解压 1234cd $HOMEmkdir fuzzing_tiff &amp;&amp; cd fuzzing_tiff&#x2F;wget https:&#x2F;&#x2F;download.osgeo.org&#x2F;libtiff&#x2F;tiff-4.0.4.tar.gztar -xzvf tiff-4.0">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-07-12T15:13:41.695Z">
+<meta property="article:modified_time" content="2023-07-12T14:56:43.011Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-Exercise 4 - LibTIFF" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/12/Exercise%204%20-%20LibTIFF/" class="article-date">
+  <time class="dt-published" datetime="2023-07-12T15:13:41.695Z" itemprop="datePublished">2023-07-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="Exercise-4-LibTIFF"><a href="#Exercise-4-LibTIFF" class="headerlink" title="Exercise 4 - LibTIFF"></a>Exercise 4 - LibTIFF</h1><p>我们准备使用fuzz测试LibTIFF来寻找漏洞</p>
+<p>首先我们准备环境，下载LIBTIFF并解压</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME</span><br><span class="line">mkdir fuzzing_tiff &amp;&amp; cd fuzzing_tiff/</span><br><span class="line">wget https://download.osgeo.org/libtiff/tiff-4.0.4.tar.gz</span><br><span class="line">tar -xzvf tiff-4.0.4.tar.gz</span><br></pre></td></tr></table></figure>
+
+<p>然后我们编译和安装LIBTIFF</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd tiff-4.0.4/</span><br><span class="line">./configure --prefix=&quot;$HOME/fuzzing_tiff/install/&quot; --disable-shared</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>然后我们使用&#x2F;test&#x2F;images&#x2F;文件夹中的示例图像作为模糊测试例子。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME/fuzzing_tiff/install/bin/tiffinfo -D -j -c -r -s -w $HOME/fuzzing_tiff/tiff-4.0.4/test/images/palette-1c-1b.tiff</span><br></pre></td></tr></table></figure>
+
+<p>![屏幕截图 2023-07-11 220446](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-11 220446.png)</p>
+<p>接下来我们使用icov测试软件的代码覆盖率，显示每行代码被触发的次数，可视化模糊过程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install lcov</span><br></pre></td></tr></table></figure>
+
+<p>现在我们用——coverage标志重新编译libTIFF</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_tiff/install</span><br><span class="line">cd $HOME/fuzzing_tiff/tiff-4.0.4/</span><br><span class="line">make clean</span><br><span class="line">  </span><br><span class="line">CFLAGS=&quot;--coverage&quot; LDFLAGS=&quot;--coverage&quot; ./configure --prefix=&quot;$HOME/fuzzing_tiff/install/&quot; --disable-shared</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>接下来我们用lcov收集代码覆盖率数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME/fuzzing_tiff/tiff-4.0.4/</span><br><span class="line">lcov --zerocounters --directory ./</span><br><span class="line">lcov --capture --initial --directory ./ --output-file app.info</span><br><span class="line">$HOME/fuzzing_tiff/install/bin/tiffinfo -D -j -c -r -s -w $HOME/fuzzing_tiff/tiff-4.0.4/test/images/palette-1c-1b.tiff</span><br><span class="line">lcov --no-checksum --directory ./ --capture --output-file app2.info</span><br></pre></td></tr></table></figure>
+
+<p>我们运行lcov后，设置生成的html后，进行查看</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">genhtml --highlight --legend -output-directory ./html-coverage/ ./app2.info</span><br></pre></td></tr></table></figure>
+
+<p>![屏幕截图 2023-07-11 232748](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-11 232748.png)</p>
+<p>首先我们进行重新编译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_tiff/install</span><br><span class="line">cd $HOME/fuzzing_tiff/tiff-4.0.4/</span><br><span class="line">make clean</span><br></pre></td></tr></table></figure>
+
+<p>再设置AFL_USE_ASAN&#x3D;1</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=afl-clang-lto ./configure --prefix=&quot;$HOME/fuzzing_tiff/install/&quot; --disable-shared</span><br><span class="line">AFL_USE_ASAN=1 make -j4</span><br><span class="line">AFL_USE_ASAN=1 make install</span><br></pre></td></tr></table></figure>
+
+<p>然后我们运行fuzz测试</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">afl-fuzz -m none -i $HOME/fuzzing_tiff/tiff-4.0.4/test/images/ -o $HOME/fuzzing_tiff/out/ -s 123 -- $HOME/fuzzing_tiff/install/bin/tiffinfo -D -j -c -r -s -w @@</span><br></pre></td></tr></table></figure>
+
+<p>![屏幕截图 2023-07-12 003641](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-12 003641.png)</p>
+<p>我们利用tiffinfo进行查看，发现发生了溢出</p>
+<p>![屏幕截图 2023-07-12 010249](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-12 010249.png)</p>
+<p>我们利用lcov检查一下代码覆盖率![屏幕截图 2023-07-12 215621](D:\github\Fuzz\Exercise4\屏幕截图 2023-07-12 215621.png)</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/07/12/Exercise%204%20-%20LibTIFF/" data-id="cljzv4ind0003fov6d368d9ol" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2023/07/12/Exercise%203%20-%20TCPdump/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title"></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">July 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%204%20-%20LibTIFF/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%203%20-%20TCPdump/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Exercise%202%20-%20libexif/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/10/Exercise%201%20-%20Xpdf/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
