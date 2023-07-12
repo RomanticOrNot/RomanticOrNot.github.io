@@ -243,80 +243,6 @@
 
 
   
-    <article id="post-Fuzz/Exercise1/Exercise 1 - Xpdf" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/" class="article-date">
-  <time class="dt-published" datetime="2023-07-12T15:13:41.618Z" itemprop="datePublished">2023-07-12</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <h1 id="Exercise-1-Xpdf"><a href="#Exercise-1-Xpdf" class="headerlink" title="Exercise 1 - Xpdf"></a>Exercise 1 - Xpdf</h1><h2 id="搭建测试目标Xpdf"><a href="#搭建测试目标Xpdf" class="headerlink" title="搭建测试目标Xpdf"></a>搭建测试目标Xpdf</h2><p>首先为fuzz测试xpdf创建文件夹</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME</span><br><span class="line">mkdir fuzzing_xpdf &amp;&amp; cd fuzzing_xpdf/</span><br></pre></td></tr></table></figure>
-
-<p>准备编译c&#x2F;c++所需要的软件包</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install build-essential</span><br></pre></td></tr></table></figure>
-
-<p>下载并编译Xpdf3.02</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">wget https://dl.xpdfreader.com/old/xpdf-3.02.tar.gz</span><br><span class="line">tar -xvzf xpdf-3.02.tar.gz</span><br><span class="line">cd xpdf-3.02</span><br><span class="line">sudo apt update &amp;&amp; sudo apt install -y build-essential gcc</span><br><span class="line">./configure --prefix=&quot;$HOME/fuzzing_xpdf/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
-
-<p>如果git失败，无法连接则输入下列命令取消代理</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global --unset https.proxy</span><br><span class="line">git config --global --unset http.proxy</span><br></pre></td></tr></table></figure>
-
-<p>接着为fuzz测试准备测试例子</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME/fuzzing_xpdf</span><br><span class="line">mkdir pdf_examples &amp;&amp; cd pdf_examples</span><br><span class="line">wget https://github.com/mozilla/pdf.js-sample-files/raw/master/helloworld.pdf</span><br><span class="line">wget http://www.africau.edu/images/default/sample.pdf</span><br><span class="line">wget https://www.melbpc.org.au/wp-content/uploads/2017/10/small-example-pdf-file.pdf</span><br></pre></td></tr></table></figure>
-
-<p>然后我们测试一下安装的pdfinfo</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME/fuzzing_xpdf/install/bin/pdfinfo -box -meta $HOME/fuzzing_xpdf/pdf_examples/helloworld.pdf</span><br></pre></td></tr></table></figure>
-
-<p><img src="/Images%5Cimage-20230707113856487.png" alt="image-20230707113856487"></p>
-<p>接下来安装AFL++测试软件</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get install -y build-essential python3-dev automake git flex bison libglib2.0-dev libpixman-1-dev python3-setuptools</span><br><span class="line">sudo apt-get install -y lld-11 llvm-11 llvm-11-dev clang-11 || sudo apt-get install -y lld llvm llvm-dev clang </span><br><span class="line">sudo apt-get install -y gcc-$(gcc --version|head -n1|sed &#x27;s/.* //&#x27;|sed &#x27;s/\..*//&#x27;)-plugin-dev libstdc++-$(gcc --version|head -n1|sed &#x27;s/.* //&#x27;|sed &#x27;s/\..*//&#x27;)-dev</span><br></pre></td></tr></table></figure>
-
-<p>输入afl-fuzz测试是否安装成功</p>
-<p>![屏幕截图 2023-07-06 230346](Images\屏幕截图 2023-07-06 230346.png)</p>
-<p>我们要使用AFL++更好的测试Xpdf就要进行插桩，利用afl-gcc重新编译，实现对分支覆盖率的捕获，以及分支节点计数。首先要清除之前编译过的。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME/fuzzing_xpdf/install</span><br><span class="line">cd $HOME/fuzzing_xpdf/xpdf-3.02/</span><br><span class="line">make clean</span><br></pre></td></tr></table></figure>
-
-<p>现在使用afl-clang-fast编译器构建xpdf:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">export LLVM_CONFIG=&quot;llvm-config-11&quot;</span><br><span class="line">CC=$HOME/AFLplusplus/afl-clang-fast CXX=$HOME/AFLplusplus/afl-clang-fast++ ./configure --prefix=&quot;$HOME/fuzzing_xpdf/install/&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
-
-<p>然后我们运行fuzz进行测试</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">afl-fuzz -i $HOME/fuzzing_xpdf/pdf_examples/ -o $HOME/fuzzing_xpdf/out/ -s 123 -- $HOME/fuzzing_xpdf/install/bin/pdftotext @@ $HOME/fuzzing_xpdf/output</span><br></pre></td></tr></table></figure>
-
-<p>如果出现”Hmm, your system is configured to send core dump notifications to an external utility…”则输入</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo su</span><br><span class="line">echo core &gt;/proc/sys/kernel/core_pattern</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
-
-<p>如果出现下列情况，则证明插桩出现问题，可以使用-n或者重新插桩</p>
-<p><img src="/Images%5Cimage-20230707133600261.png" alt="image-20230707133600261"></p>
-<p>成功之后我们运行AFL，我们发现一个cash后退出，进入HOME&#x2F;fuzzing_xpdf&#x2F;out&#x2F;查看输出的cash样例信息</p>
-<p>![屏幕截图 2023-07-07 110152](Images\屏幕截图 2023-07-07 110152.png)</p>
-<p>![屏幕截图 2023-07-07 110201](Images\屏幕截图 2023-07-07 110201.png)</p>
-<p>找到cash样例后我们打开gdb进行调试，首先下入多个断点，将样例作为输入，运行后会出现segmentation fault错误</p>
-<p>![屏幕截图 2023-07-07 111228](Images\屏幕截图 2023-07-07 111228.png)</p>
-<p>接着我们输入bt查看报错堆栈</p>
-<p><img src="/Images%5Cimage-20230707135029084.png" alt="image-20230707135029084"></p>
-<p>我们可以发现多次调用了Parser::getObj，陷入了无限递归调用中，由于递归调用无法结束所以堆栈无法清理，最终导致栈溢出。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/" data-id="cljzvbhhn0003owv647ui1up7" data-title="" class="article-share-link"><span class="fa fa-share">Share</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
     <article id="post-Exercise 1 - Xpdf" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2023/07/10/Exercise%201%20-%20Xpdf/" class="article-date">
@@ -431,10 +357,6 @@
         
           <li>
             <a href="/2023/07/12/Exercise%202%20-%20libexif/">(no title)</a>
-          </li>
-        
-          <li>
-            <a href="/2023/07/12/Fuzz/Exercise1/Exercise%201%20-%20Xpdf/">(no title)</a>
           </li>
         
           <li>
